@@ -1,5 +1,6 @@
 import csv
 import os
+import pandas as pd
 
 
 class Expense:
@@ -18,9 +19,10 @@ class Expense:
 
     def WriteToCsv(self):
         if os.path.isfile("../Resources/Expense.csv"):
-            with open("../Resources/Expense.csv", 'a', encoding='utf-8', newline='') as file:
-                writer = csv.writer(file)
-                writer.writerow(self.expenseList)
+            data = pd.read_csv("../Resources/Expense.csv")
+            df = pd.DataFrame(data)
+            df.loc[df['Tags'] == self.expenseList[2], ['Amount']] += int(self.expenseList[1])
+            df.to_csv("../Resources/Expense.csv", index=False)
         else:
             with open("../Resources/Expense.csv", 'w', encoding='utf-8', newline='') as file:
                 writer = csv.writer(file)
