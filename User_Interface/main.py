@@ -6,6 +6,11 @@ import Src.Expenses
 from PyQt5.QtChart import *
 
 
+cmbMainModeData = ['Yearly', 'Monthly', 'All Time']
+cmbMainMonthData = {'None'}
+cmbMainYearData = {'None'}
+
+
 class AddExpenseWindow(QWidget):
     def __init__(self):
         super(AddExpenseWindow, self).__init__()
@@ -82,21 +87,33 @@ class DlgMain(QMainWindow):
 
         # widgets
         self.tblShowData = self.findChild(QTableWidget, "tblShowData")
-        self.cmbShowDataType = self.findChild(QComboBox, "cmbShowDataType")
+        self.cmbMode = self.findChild(QComboBox, "cmbMode")
+        self.cmbMonth = self.findChild(QComboBox, "cmbMonth")
+        self.cmbYear = self.findChild(QComboBox, "cmbYear")
         self.btnAddExpense = self.findChild(QPushButton, "btnAddExpense")
+        self.btnRefreshFilters = self.findChild(QPushButton, "btnRefreshFilters")
         self.wiChart = self.findChild(QChartView, 'wiChart')
 
         # calling functions
         self.loadData_tblShowData()
-        self.displayGraphAllTimeExpense()
+        self.loadData_cmbs()
+        self.displayGraph()
 
         # signals
         self.btnAddExpense.clicked.connect(self.evt_btnAddExpense_clicked)
+        self.btnRefreshFilters.clicked.connect(self.evt_btnRefreshFilters_clicked)
+        self.cmbMode.currentIndexChanged.connect(self.updateGraphsAndTable)
 
     # signal functions
     def evt_btnAddExpense_clicked(self):
         self.AddWindow = AddExpenseWindow()
         self.AddWindow.show()
+
+    def evt_btnRefreshFilters_clicked(self):
+        self.cmbMode.clear()
+        self.cmbMonth.clear()
+        self.cmbYear.clear()
+        self.loadData_cmbs()
 
     # Display Items
     def loadData_tblShowData(self):
@@ -116,43 +133,85 @@ class DlgMain(QMainWindow):
         except FileNotFoundError:
             QMessageBox.critical(self, 'Error', 'No Expense records exist!')
 
+    def loadData_cmbs(self):
+        allData = Src.Expenses.Expense.ReturnData()
+        counter = 0
+        for li in allData:
+            for element in li:
+                counter += 1
+                if counter == 1:
+                    monthYear = element.split(' ')
+                    cmbMainMonthData.add(monthYear[0])
+                    cmbMainYearData.add(monthYear[1])
+            counter = 0
+        self.cmbMode.addItems(cmbMainModeData)
+        self.cmbMonth.addItems(cmbMainMonthData)
+        self.cmbYear.addItems(cmbMainYearData)
+
     # Plots
-    def displayGraphAllTimeExpense(self):
-        set0 = QBarSet("Expense")
-        data = Src.Expenses.Expense.ReturnPlotData()
-        set0.append(data[0])
+    def displayGraph(self):
+        # all time graph. Includes all tags and dates
+        if cmbMainModeData[self.cmbMode.currentIndex()] == 'All Time':
+            indexMonth = self.cmbMonth.findData('None')
+            indexYear = self.cmbYear.findData('None')
+            lengthMonth = self.cmbMonth.count()
+            lengthYear = self.cmbYear.count()
+            for i in range(lengthMonth):
+                if i != indexMonth:
+                    self.cmbMonth.model().item(i).setEnabled(False)
+            for z in range(lengthYear):
+                if z != indexYear:
+                    self.cmbYear.model().item(z).setEnabled(False)
+            set0 = QBarSet("Expense")
+            data = Src.Expenses.Expense.ReturnPlotData()
+            set0.append(data[0])
 
-        series = QBarSeries()
-        series.append(set0)
+            series = QBarSeries()
+            series.append(set0)
 
-        chart = QChart()
-        chart.addSeries(series)
-        chart.setTitle("")
-        chart.setAnimationOptions(QChart.SeriesAnimations)
+            chart = QChart()
+            chart.addSeries(series)
+            chart.setTitle("")
+            chart.setAnimationOptions(QChart.AllAnimations)
 
-        categories = data[1]
-        xAxis = QBarCategoryAxis()
-        xAxis.append(categories)
+            categories = data[1]
+            xAxis = QBarCategoryAxis()
+            xAxis.append(categories)
 
-        chart.createDefaultAxes()
-        chart.setAxisX(xAxis, series)
+            chart.createDefaultAxes()
+            chart.setAxisX(xAxis, series)
 
-        self.wiChart.setChart(chart)
+            self.wiChart.setChart(chart)
+        elif cmbMainModeData[self.cmbMode.currentIndex()] == 'Yearly':
+            indexMonth = self.cmbMonth.findData('None')
+            lengthMonth = self.cmbMonth.count()
+            lengthYear = self.cmbYear.count()
+            for i in range(lengthMonth):
+                if i != indexMonth:
+                    self.cmbMonth.model().item(i).setEnabled(False)
+            for z in range(lengthYear):
+                self.cmbYear.model().item(z).setEnabled(True)
+
+        elif cmbMainModeData[self.cmbMode.currentIndex()] == 'Monthly':
+            lengthMonth = self.cmbMonth.count()
+            lengthYear = self.cmbYear.count()
+            for i in range(lengthMonth):
+                self.cmbMonth.model().item(i).setEnabled(True)
+            for z in range(lengthYear):
+                self.cmbMonth.model().item(z).setEnabled(True)
+
 
     # update widget functions:
-    def updateTableAndGraph(self):
-        print(self.isActiveWindow())
-        self.displayGraphAllTimeExpense()
+    def updateGraphsAndTable(self):
+        self.displayGraph()
         self.loadData_tblShowData()
 
     # event filter for change in focus:
     def eventFilter(self, object, event):
         if event.type() == QEvent.WindowActivate:
-            self.updateTableAndGraph()
-            print("Main Window has focus")
+            self.updateGraphsAndTable()
         elif event.type() == QEvent.WindowDeactivate:
-            self.updateTableAndGraph()
-            print("Main window doesn't have focus")
+            self.updateGraphsAndTable()
         return False
 
 
