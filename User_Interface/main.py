@@ -1,8 +1,9 @@
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import QDate
+from PyQt5.QtCore import QDate, QEvent
 from PyQt5 import uic
 import sys
 import Src.Expenses
+from PyQt5.QtChart import *
 
 
 class AddExpenseWindow(QWidget):
@@ -10,6 +11,8 @@ class AddExpenseWindow(QWidget):
         super(AddExpenseWindow, self).__init__()
         uic.loadUi("CreateExpense_Window.ui", self)
         self.setWindowTitle("Add Expense")
+        self.setFocus()
+
         # widgets
         self.leditExpense = self.findChild(QLineEdit, "leditExpense")
         self.cmbTag = self.findChild(QComboBox, "cmbTag")
@@ -51,6 +54,7 @@ class AddTagWindow(QWidget):
     def __init__(self):
         super(AddTagWindow, self).__init__()
         uic.loadUi("NewTag_Window.ui", self)
+        self.setFocus()
 
         # widgets
         self.leditNewTag = self.findChild(QLineEdit, "leditNewTag")
@@ -73,17 +77,23 @@ class DlgMain(QMainWindow):
         super(DlgMain, self).__init__()
         uic.loadUi("Main_Window.ui", self)
         self.setWindowTitle("Expense Tracker")
+        # so that I can change the event when the window looses focus
+        self.installEventFilter(self)
 
         # widgets
         self.tblShowData = self.findChild(QTableWidget, "tblShowData")
         self.cmbShowDataType = self.findChild(QComboBox, "cmbShowDataType")
         self.btnAddExpense = self.findChild(QPushButton, "btnAddExpense")
+        self.wiChart = self.findChild(QChartView, 'wiChart')
 
+        # calling functions
         self.loadData_tblShowData()
+        self.displayGraphAllTimeExpense()
 
         # signals
         self.btnAddExpense.clicked.connect(self.evt_btnAddExpense_clicked)
 
+    # signal functions
     def evt_btnAddExpense_clicked(self):
         self.AddWindow = AddExpenseWindow()
         self.AddWindow.show()
@@ -99,15 +109,52 @@ class DlgMain(QMainWindow):
             self.tblShowData.setColumnWidth(2, 131)
             for li in allData:
                 for element in li:
-                    print(element)
-                    print(column)
-                    print(row)
                     self.tblShowData.setItem(row, column, QTableWidgetItem(element))
                     column += 1
                 column = 0
                 row += 1
         except FileNotFoundError:
             QMessageBox.critical(self, 'Error', 'No Expense records exist!')
+
+    # Plots
+    def displayGraphAllTimeExpense(self):
+        set0 = QBarSet("Expense")
+        data = Src.Expenses.Expense.ReturnPlotData()
+        set0.append(data[0])
+
+        series = QBarSeries()
+        series.append(set0)
+
+        chart = QChart()
+        chart.addSeries(series)
+        chart.setTitle("")
+        chart.setAnimationOptions(QChart.SeriesAnimations)
+
+        categories = data[1]
+        xAxis = QBarCategoryAxis()
+        xAxis.append(categories)
+
+        chart.createDefaultAxes()
+        chart.setAxisX(xAxis, series)
+
+        self.wiChart.setChart(chart)
+
+    # update widget functions:
+    def updateTableAndGraph(self):
+        print(self.isActiveWindow())
+        self.displayGraphAllTimeExpense()
+        self.loadData_tblShowData()
+
+    # event filter for change in focus:
+    def eventFilter(self, object, event):
+        if event.type() == QEvent.WindowActivate:
+            self.updateTableAndGraph()
+            print("Main Window has focus")
+        elif event.type() == QEvent.WindowDeactivate:
+            self.updateTableAndGraph()
+            print("Main window doesn't have focus")
+        return False
+
 
 
 def my_exception_hook(exctype, value, traceback):
