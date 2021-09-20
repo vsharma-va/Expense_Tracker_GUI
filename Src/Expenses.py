@@ -21,7 +21,11 @@ class Expense:
         if os.path.isfile("../Resources/Expense.csv"):
             data = pd.read_csv("../Resources/Expense.csv")
             df = pd.DataFrame(data)
-            df.loc[df['Tags'] == self.expenseList[2], ['Amount']] += int(self.expenseList[1])
+            if df.isin([self.expenseList[2]]).any().any():
+                df.loc[df['Tags'] == self.expenseList[2], ['Amount']] += int(self.expenseList[1])
+            else:
+                dfLength = len(df)
+                df.loc[dfLength] = self.expenseList
             df.to_csv("../Resources/Expense.csv", index=False)
         else:
             with open("../Resources/Expense.csv", 'w', encoding='utf-8', newline='') as file:
@@ -61,4 +65,13 @@ class Expense:
                 data.append(line)
         file.close()
         return data
+
+    @staticmethod
+    def ReturnPlotData() -> list:
+        data = pd.read_csv("../Resources/Expense.csv")
+        df = pd.DataFrame(data)
+        expense = df['Amount']
+        tags = df['Tags']
+        returnList = [expense, tags]
+        return returnList
 
