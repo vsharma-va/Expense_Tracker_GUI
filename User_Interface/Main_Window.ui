@@ -194,7 +194,7 @@
           <property name="bottomMargin">
            <number>0</number>
           </property>
-          <item alignment="Qt::AlignRight|Qt::AlignTop">
+          <item>
            <widget class="QFrame" name="frmPlus">
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -202,7 +202,7 @@
             <property name="frameShadow">
              <enum>QFrame::Raised</enum>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <layout class="QVBoxLayout" name="verticalLayout_5">
              <property name="spacing">
               <number>0</number>
              </property>
@@ -218,7 +218,7 @@
              <property name="bottomMargin">
               <number>0</number>
              </property>
-             <item>
+             <item alignment="Qt::AlignRight|Qt::AlignTop">
               <widget class="QPushButton" name="btnAddExpense">
                <property name="font">
                 <font>
@@ -229,6 +229,9 @@
                 <string>+</string>
                </property>
               </widget>
+             </item>
+             <item>
+              <widget class="QChartView" name="wiChart" native="true"/>
              </item>
             </layout>
            </widget>
@@ -253,6 +256,14 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QChartView</class>
+   <extends>QWidget</extends>
+   <header>PyQt5.QtChart</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

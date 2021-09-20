@@ -22,6 +22,11 @@
      <height>20</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </widget>
   <widget class="QLabel" name="lblNewTag">
    <property name="geometry">
