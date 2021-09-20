@@ -21,7 +21,7 @@ class Expense:
         if os.path.isfile("../Resources/Expense.csv"):
             data = pd.read_csv("../Resources/Expense.csv")
             df = pd.DataFrame(data)
-            if df.isin([self.expenseList[2]]).any().any():
+            if df.isin([self.expenseList[2]]).any().any() and df.isin([self.expenseList[0]]).any().any():
                 df.loc[df['Tags'] == self.expenseList[2], ['Amount']] += int(self.expenseList[1])
             else:
                 dfLength = len(df)
@@ -34,6 +34,13 @@ class Expense:
                 writer.writerow(fields)
                 writer.writerow(self.expenseList)
             file.close()
+
+    def ChangeRecords(self, row: int, column: int, changedRecord: str) -> None:
+        if os.path.isfile("../Resources/Expense.csv"):
+            data = pd.read_csv("../Resources/Expense.csv")
+            df = pd.DataFrame(data)
+            df.iloc[row, column] = changedRecord
+            df.to_csv("../Resources/Expense.csv", index=False)
 
     @staticmethod
     def AddTag(tagName: str):
