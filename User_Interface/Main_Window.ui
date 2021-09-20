@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>818</width>
-    <height>605</height>
+    <width>819</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -108,13 +108,19 @@
                 <number>0</number>
                </property>
                <item>
-                <widget class="QComboBox" name="comboBox"/>
+                <widget class="QComboBox" name="cmbMode">
+                 <property name="font">
+                  <font>
+                   <stylestrategy>PreferAntialias</stylestrategy>
+                  </font>
+                 </property>
+                </widget>
                </item>
                <item>
-                <widget class="QComboBox" name="comboBox_2"/>
+                <widget class="QComboBox" name="cmbMonth"/>
                </item>
                <item>
-                <widget class="QComboBox" name="comboBox_3"/>
+                <widget class="QComboBox" name="cmbYear"/>
                </item>
               </layout>
              </widget>
@@ -218,7 +224,19 @@
              <property name="bottomMargin">
               <number>0</number>
              </property>
-             <item alignment="Qt::AlignRight|Qt::AlignTop">
+             <item>
+              <widget class="QPushButton" name="btnRefreshFilters">
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>Refresh Filters</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QPushButton" name="btnAddExpense">
                <property name="font">
                 <font>
@@ -249,7 +267,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>818</width>
+     <width>819</width>
      <height>21</height>
     </rect>
    </property>
