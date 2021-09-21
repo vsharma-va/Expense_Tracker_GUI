@@ -18,14 +18,37 @@ class Expense:
         return self.expenseList
 
     def WriteToCsv(self):
+        doesntExists = False
         if os.path.isfile("../Resources/Expense.csv"):
             data = pd.read_csv("../Resources/Expense.csv")
             df = pd.DataFrame(data)
             if df.isin([self.expenseList[2]]).any().any() and df.isin([self.expenseList[0]]).any().any():
-                df.loc[df['Tags'] == self.expenseList[2], ['Amount']] += int(self.expenseList[1])
+                tempDf = df.loc[df['Tags'] == self.expenseList[2], ['Date']]
+                lenDf = len(tempDf)
+                matchFound = False
+
+                for i in range(lenDf):
+                    if tempDf.iat[i, 0].strip() == self.expenseList[0].strip():
+                        matchFound = True
+                        break
+                    else:
+                        matchFound = False
+
+                if matchFound:
+                    df.loc[df['Tags'] == self.expenseList[2], ['Amount']] += int(self.expenseList[1])
+
+                else:
+                    doesntExists = True
+
             else:
                 dfLength = len(df)
                 df.loc[dfLength] = self.expenseList
+
+            if doesntExists:
+                print("OK")
+                dfLength = len(df)
+                df.loc[dfLength] = self.expenseList
+
             df.to_csv("../Resources/Expense.csv", index=False)
         else:
             with open("../Resources/Expense.csv", 'w', encoding='utf-8', newline='') as file:
@@ -81,4 +104,3 @@ class Expense:
         tags = df['Tags']
         returnList = [expense, tags]
         return returnList
-
