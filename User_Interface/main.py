@@ -1,8 +1,11 @@
+import sys
+sys.path.insert(1, '../Src')
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QDate, QEvent, Qt
 from PyQt5 import uic
 import sys
-import Src.Expenses
+import Expenses
 from PyQt5.QtChart import *
 
 
@@ -26,7 +29,7 @@ class AddExpenseWindow(QWidget):
         self.btnRefreshTags = self.findChild(QPushButton, "btnRefreshTags")
 
         # Display Items
-        self.allTags = Src.Expenses.Expense.ReturnTags()
+        self.allTags = Expenses.Expense.ReturnTags()
         self.cmbTag.addItems(self.allTags)
 
         # signals
@@ -44,13 +47,13 @@ class AddExpenseWindow(QWidget):
             QMessageBox.critical(self, 'Error', 'Expense field can not be empty!')
         else:
             tagIndex = self.cmbTag.currentIndex()
-            obj = Src.Expenses.Expense()
+            obj = Expenses.Expense()
             obj.CreateExpense(QDate.currentDate().toString(), expense, self.allTags[tagIndex])
             obj.WriteToCsv()
             QMessageBox.information(self, 'Confirmation', 'Expense Successfully added')
 
     def evt_btnRefreshTags_clicked(self):
-        self.allTags = Src.Expenses.Expense.ReturnTags()
+        self.allTags = Expenses.Expense.ReturnTags()
         self.cmbTag.clear()
         self.cmbTag.addItems(self.allTags)
 
@@ -73,7 +76,7 @@ class AddTagWindow(QWidget):
         if len(newTagName) == 0:
             QMessageBox.critical(self, 'Error', 'Tag name field can not be empty')
         else:
-            Src.Expenses.Expense.AddTag(newTagName)
+            Expenses.Expense.AddTag(newTagName)
             QMessageBox.information(self, 'Confirmation', "New Tag Name added")
 
 
@@ -125,34 +128,102 @@ class DlgMain(QMainWindow):
     def evt_tblShowData_cellChanged(self, row, column):
         self.tblShowData.blockSignals(True)
         requiredRecord = self.tblShowData.item(row, column)
-        self.tblShowData.setItem(row, column, requiredRecord)
-        self.tblShowData.blockSignals(False)
-        obj = Src.Expenses.Expense()
-        obj.ChangeRecords(row, column, requiredRecord.text())
+        if column == 1:
+            self.tblShowData.setItem(row, column, requiredRecord)
+            self.tblShowData.blockSignals(False)
+            obj = Expenses.Expense()
+            obj.ChangeRecords(row, column, requiredRecord.text())
 
     # Display Items
     def loadData_tblShowData(self):
         try:
-            row1 = 0
-            column1 = 0
-            allData = Src.Expenses.Expense.ReturnData()
-            self.tblShowData.blockSignals(True)
-            self.tblShowData.setRowCount(len(allData))
-            self.tblShowData.setColumnCount(3)
-            self.tblShowData.setColumnWidth(2, 131)
-            for li in allData:
-                for element in li:
-                    self.tblShowData.setItem(row1, column1, QTableWidgetItem(element))
-                    column1 += 1
+            if cmbMainModeData[self.cmbMode.currentIndex()] == 'All Time':
+                row1 = 0
                 column1 = 0
-                row1 += 1
-            self.tblShowData.blockSignals(False)
+                allData = Expenses.Expense.ReturnData()
+                self.tblShowData.blockSignals(True)
+                self.tblShowData.setRowCount(0)
+                self.tblShowData.setRowCount(len(allData))
+                self.tblShowData.setColumnCount(3)
+                self.tblShowData.setColumnWidth(2, 131)
+                for li in allData:
+                    for element in li:
+                        self.tblShowData.setItem(row1, column1, QTableWidgetItem(element))
+                        column1 += 1
+                    column1 = 0
+                    row1 += 1
+                self.tblShowData.blockSignals(False)
+
+            elif cmbMainModeData[self.cmbMode.currentIndex()] == 'Yearly':
+                row = 0
+                column = 0
+                findDateCounter = 0
+                allData = Expenses.Expense.ReturnData()
+                addToRequiredData = False
+                requiredData = []
+                for li in allData:
+                    for element in li:
+                        findDateCounter += 1
+                        if findDateCounter == 1:
+                            monthYear = element.split(' ')
+                            if monthYear[1] == cmbMainYearData[self.cmbYear.currentIndex()]:
+                                addToRequiredData = True
+                        if addToRequiredData:
+                            requiredData.append(element)
+                    addToRequiredData = False
+                    findDateCounter = 0
+                self.tblShowData.blockSignals(True)
+                self.tblShowData.setRowCount(0)
+                # divide by three because the data will always be in multiple of 3.
+                # and each row contain three cells
+                self.tblShowData.setRowCount(len(requiredData) / 3)
+                self.tblShowData.setColumnCount(3)
+                for i in requiredData:
+                    for records in requiredData:
+                        self.tblShowData.setItem(row, column, QTableWidgetItem(records))
+                        column += 1
+                    column = 0
+                    row = 0
+                self.tblShowData.blockSignals(False)
+
+            elif cmbMainModeData[self.cmbMode.currentIndex()] == 'Monthly':
+                row = 0
+                column = 0
+                findDateCounter = 0
+                allData = Expenses.Expense.ReturnData()
+                addToRequiredData = False
+                requiredData = []
+                for li in allData:
+                    for element in li:
+                        findDateCounter += 1
+                        if findDateCounter == 1:
+                            monthYear = element.split(' ')
+                            if monthYear[1] == cmbMainYearData[self.cmbYear.currentIndex()] and \
+                                    monthYear[0] == cmbMainMonthData[self.cmbMonth.currentIndex()]:
+                                addToRequiredData = True
+                        if addToRequiredData:
+                            requiredData.append(element)
+                    addToRequiredData = False
+                    findDateCounter = 0
+
+                self.tblShowData.blockSignals(True)
+                self.tblShowData.setRowCount(0)
+                self.tblShowData.setRowCount(len(requiredData) / 3)
+                self.tblShowData.setColumnCount(3)
+                for i in requiredData:
+                    for records in requiredData:
+                        self.tblShowData.setItem(row, column, QTableWidgetItem(records))
+                        column += 1
+                    column = 0
+                    row = 0
+                self.tblShowData.blockSignals(False)
+
         except FileNotFoundError:
             QMessageBox.critical(self, 'Error', 'No Expense records exist!')
 
     def loadData_cmbs(self):
         self.blockSignals(True)
-        allData = Src.Expenses.Expense.ReturnData()
+        allData = Expenses.Expense.ReturnData()
         counter = 0
         for li in allData:
             for element in li:
@@ -184,7 +255,7 @@ class DlgMain(QMainWindow):
                 if z != indexYear:
                     self.cmbYear.model().item(z).setEnabled(False)
             set0 = QBarSet("Expense")
-            data = Src.Expenses.Expense.ReturnPlotData()
+            data = Expenses.Expense.ReturnPlotData()
             set0.append(data[0])
 
             series = QBarSeries()
@@ -216,7 +287,7 @@ class DlgMain(QMainWindow):
 
             set0 = QBarSet("Expenses Yearly")
 
-            data = Src.Expenses.Expense.ReturnData()
+            data = Expenses.Expense.ReturnData()
             dataToPlot = []
             expenseList = []
             tagsList = []
@@ -275,7 +346,7 @@ class DlgMain(QMainWindow):
             for z in range(lengthYear):
                 self.cmbMonth.model().item(z).setEnabled(True)
 
-            data = Src.Expenses.Expense.ReturnData()
+            data = Expenses.Expense.ReturnData()
             dataToPlot = []
             expenseList = []
             tagsList = []
