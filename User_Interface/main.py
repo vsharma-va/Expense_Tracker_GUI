@@ -278,12 +278,18 @@ class DlgMain(QMainWindow):
             indexYear = self.cmbYear.findData('None')
             lengthMonth = self.cmbMonth.count()
             lengthYear = self.cmbYear.count()
+            lengthGraphMonth = self.cmbGraphMonth.count()
+            lengthGraphYear = self.cmbGraphYear.count()
             for i in range(lengthMonth):
                 if i != indexMonth:
                     self.cmbMonth.model().item(i).setEnabled(False)
             for z in range(lengthYear):
                 if z != indexYear:
                     self.cmbYear.model().item(z).setEnabled(False)
+            for k in range(lengthGraphMonth):
+                self.cmbGraphMonth.model().item(k).setEnabled(False)
+            for h in range(lengthGraphYear):
+                self.cmbGraphYear.model().item(h).setEnabled(False)
             set0 = QBarSet("Expense")
             data = Expenses.Expense.ReturnPlotData()
             set0.append(data[0])
@@ -309,11 +315,17 @@ class DlgMain(QMainWindow):
             indexMonth = self.cmbMonth.findData('None')
             lengthMonth = self.cmbMonth.count()
             lengthYear = self.cmbYear.count()
+            lengthGraphMonth = self.cmbGraphMonth.count()
+            lengthGraphYear = self.cmbGraphYear.count()
             for i in range(lengthMonth):
                 if i != indexMonth:
                     self.cmbMonth.model().item(i).setEnabled(False)
             for z in range(lengthYear):
                 self.cmbYear.model().item(z).setEnabled(True)
+            for k in range(lengthGraphMonth):
+                self.cmbGraphMonth.model().item(k).setEnabled(False)
+            for h in range(lengthGraphYear):
+                self.cmbGraphYear.model().item(h).setEnabled(True)
 
             set0 = QBarSet("Expenses Yearly")
 
@@ -349,10 +361,13 @@ class DlgMain(QMainWindow):
                         tagsList.append(element)
                 anotherCounter = 0
 
+            subPlot = self.displaySubplots(self.cmbGraphYear.currentIndex(), self.cmbGraphMonth.currentIndex(), tagsList, True, False)
+
             set0.append(expenseList)
 
             series = QBarSeries()
             series.append(set0)
+            series.append(subPlot[0])
 
             chart = QChart()
             chart.addSeries(series)
@@ -362,6 +377,7 @@ class DlgMain(QMainWindow):
             categories = tagsList
             xAxis = QBarCategoryAxis()
             xAxis.append(categories)
+            xAxis.append(subPlot[1])
 
             chart.createDefaultAxes()
             chart.setAxisX(xAxis, series)
@@ -371,10 +387,16 @@ class DlgMain(QMainWindow):
         elif cmbMainModeData[self.cmbMode.currentIndex()] == 'Monthly':
             lengthMonth = self.cmbMonth.count()
             lengthYear = self.cmbYear.count()
+            lengthGraphMonth = self.cmbGraphMonth.count()
+            lengthGraphYear = self.cmbGraphYear.count()
             for i in range(lengthMonth):
                 self.cmbMonth.model().item(i).setEnabled(True)
             for z in range(lengthYear):
                 self.cmbMonth.model().item(z).setEnabled(True)
+            for k in range(lengthGraphMonth):
+                self.cmbGraphMonth.model().item(k).setEnabled(True)
+            for h in range(lengthGraphYear):
+                self.cmbGraphYear.model().item(h).setEnabled(True)
 
             data = Expenses.Expense.ReturnData()
             dataToPlot = []
