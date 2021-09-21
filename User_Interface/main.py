@@ -1,17 +1,17 @@
 import sys
 sys.path.insert(1, '../Src')
-
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QDate, QEvent, Qt
-from PyQt5 import uic
-import sys
-import Expenses
 from PyQt5.QtChart import *
+from PyQt5 import uic
+import Expenses
 
-
-cmbMainModeData = ['Yearly', 'Monthly', 'All Time']
+cmbMainModeData = ['None', 'Yearly', 'Monthly', 'All Time']
 cmbMainMonthData = ['None']
 cmbMainYearData = ['None']
+
+cmbMainGraphMonthData = ['None']
+cmbMainGraphYearData = ['None']
 
 
 class AddExpenseWindow(QWidget):
@@ -90,11 +90,29 @@ class DlgMain(QMainWindow):
 
         # widgets
         self.tblShowData = self.findChild(QTableWidget, "tblShowData")
+        self.tblShowData.setToolTip("Double click on any cell to change it's value")
+
         self.cmbMode = self.findChild(QComboBox, "cmbMode")
+        self.cmbMode.setToolTip("Filter")
+
         self.cmbMonth = self.findChild(QComboBox, "cmbMonth")
+        self.cmbMonth.setToolTip("Select Month")
+
         self.cmbYear = self.findChild(QComboBox, "cmbYear")
+        self.cmbYear.setToolTip("Select Year")
+
+        self.cmbGraphMonth = self.findChild(QComboBox, "cmbGraphMonth")
+        self.cmbGraphMonth.setToolTip("Select month to compare")
+
+        self.cmbGraphYear = self.findChild(QComboBox, "cmbGraphYear")
+        self.cmbGraphYear.setToolTip("Select which year to compare")
+
         self.btnAddExpense = self.findChild(QPushButton, "btnAddExpense")
+        self.btnAddExpense.setToolTip("Click To Add a new expense")
+
         self.btnRefreshFilters = self.findChild(QPushButton, "btnRefreshFilters")
+        self.btnRefreshFilters.setToolTip("Click if new months or years are not shown")
+
         self.wiChart = self.findChild(QChartView, 'wiChart')
 
         # flags
@@ -111,6 +129,8 @@ class DlgMain(QMainWindow):
         self.cmbMode.currentIndexChanged.connect(self.updateGraphsAndTable)
         self.cmbYear.currentIndexChanged.connect(self.updateGraphsAndTable)
         self.cmbMonth.currentIndexChanged.connect(self.updateGraphsAndTable)
+        self.cmbGraphYear.currentIndexChanged.connect(self.updateGraphsAndTable)
+        self.cmbGraphMonth.currentIndexChanged.connect(self.updateGraphsAndTable)
         self.tblShowData.cellChanged.connect(self.evt_tblShowData_cellChanged)
         self.tblShowData.cellChanged.connect(self.updateGraphsAndTable)
 
@@ -123,6 +143,8 @@ class DlgMain(QMainWindow):
         self.cmbMode.clear()
         self.cmbMonth.clear()
         self.cmbYear.clear()
+        self.cmbGraphMonth.clear()
+        self.cmbGraphYear.clear()
         self.loadData_cmbs()
 
     def evt_tblShowData_cellChanged(self, row, column):
@@ -133,6 +155,8 @@ class DlgMain(QMainWindow):
             self.tblShowData.blockSignals(False)
             obj = Expenses.Expense()
             obj.ChangeRecords(row, column, requiredRecord.text())
+        else:
+            self.tblShowData.blockSignals(False)
 
     # Display Items
     def loadData_tblShowData(self):
@@ -208,6 +232,8 @@ class DlgMain(QMainWindow):
 
                 self.tblShowData.blockSignals(True)
                 self.tblShowData.setRowCount(0)
+                # divide by three because the data will always be in multiple of 3.
+                # and each row contain three cells
                 self.tblShowData.setRowCount(len(requiredData) / 3)
                 self.tblShowData.setColumnCount(3)
                 for i in requiredData:
@@ -232,12 +258,16 @@ class DlgMain(QMainWindow):
                     monthYear = element.split(' ')
                     if monthYear[0] not in cmbMainMonthData:
                         cmbMainMonthData.append(monthYear[0])
+                        cmbMainGraphMonthData.append(monthYear[0])
                     if monthYear[1] not in cmbMainYearData:
                         cmbMainYearData.append(monthYear[1])
+                        cmbMainGraphYearData.append(monthYear[1])
             counter = 0
         self.cmbMode.addItems(cmbMainModeData)
         self.cmbMonth.addItems(cmbMainMonthData)
         self.cmbYear.addItems(cmbMainYearData)
+        self.cmbGraphYear.addItems(cmbMainGraphYearData)
+        self.cmbGraphMonth.addItems(cmbMainGraphMonthData)
         self.blockSignals(False)
 
     # Plots
@@ -383,7 +413,9 @@ class DlgMain(QMainWindow):
             set1.append(expenseList)
 
             series = QBarSeries()
+            subPlot = self.displaySubplots(self.cmbGraphYear.currentIndex(), self.cmbGraphMonth.currentIndex(), tagsList, True, True)
             series.append(set1)
+            series.append(subPlot[0])
 
             chart = QChart()
             chart.addSeries(series)
@@ -393,13 +425,84 @@ class DlgMain(QMainWindow):
             categories = tagsList
             xAxis = QBarCategoryAxis()
             xAxis.append(categories)
+            xAxis.append(subPlot[1])
 
             chart.createDefaultAxes()
             chart.setAxisX(xAxis, series)
 
             self.wiChart.setChart(chart)
 
+    def displaySubplots(self, graphYearIndex: int, graphMonthIndex: int, xTicks: list, year: bool, month: bool) -> list:
+        userData = Expenses.Expense.ReturnData()
+        dataToPlot = []
+        tempExpenseList = []
+        expenseList = []
+        tagsList = []
+        tempList = []
+        addToDataToPlot = False
+        counter = 0
+        for li in userData:
+            for element in li:
+                counter += 1
+                if counter == 1:
+                    monthYear = element.split(' ')
+                    if year and month:
+                        if monthYear[1] == cmbMainGraphYearData[graphYearIndex] and \
+                                monthYear[0] == cmbMainMonthData[graphMonthIndex]:
+                            addToDataToPlot = True
+                    elif year and not month:
+                        if monthYear[1] == cmbMainGraphYearData[graphYearIndex]:
+                            addToDataToPlot = True
+                    elif not year and month:
+                        if monthYear[0] == cmbMainMonthData[graphMonthIndex]:
+                            addToDataToPlot = True
+                if addToDataToPlot:
+                    if counter != 1:
+                        tempList.append(element)
+            dataToPlot.append(tempList)
+            tempList = []
+            addToDataToPlot = False
+            counter = 0
+
+        anotherCounter = 0
+        for li2 in dataToPlot:
+            for element in li2:
+                anotherCounter += 1
+                if anotherCounter == 1:
+                    tempExpenseList.append(float(element))
+                elif anotherCounter == 2:
+                    tagsList.append(element)
+            anotherCounter = 0
+
+        counterToRemove = 0
+        for i in range(len(xTicks)):
+            try:
+                if xTicks[i] == tagsList[i]:
+                    expenseList.append(tempExpenseList[i - counterToRemove])
+                    tempExpenseList.pop(i - counterToRemove)
+                    counterToRemove += 1
+                else:
+                    expenseList.append(0)
+            except IndexError:
+                expenseList.append(0)
+
+        if tempExpenseList:
+            for i in tempExpenseList:
+                expenseList.append(i)
+
+        print(expenseList)
+        print(tagsList)
+
+        if year and month:
+            set2 = QBarSet('{} {}'.format(cmbMainGraphYearData[graphYearIndex], cmbMainGraphMonthData[graphMonthIndex]))
+        elif year and not month:
+            set2 = QBarSet('{}'.format(cmbMainGraphYearData[graphYearIndex]))
+
+        set2.append(expenseList)
+        return [set2, tagsList]
+
     # update widget functions:
+
     def updateGraphsAndTable(self):
         self.displayGraph()
         self.loadData_tblShowData()
