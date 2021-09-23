@@ -2,8 +2,9 @@ import sys
 sys.path.insert(1, '../Src')
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QDate, QEvent, Qt
-from PyQt5.QtChart import *
-from PyQt5 import uic
+from PyQt5.QtChart import QChart, QBarSet, QBarSeries, QBarCategoryAxis, QChartView
+from PyQt5.QtGui import QColor
+from PyQt5 import uic   
 import Expenses
 
 cmbMainModeData = ['None', 'Yearly', 'Monthly', 'All Time']
@@ -87,7 +88,7 @@ class DlgMain(QMainWindow):
         self.setWindowTitle("Expense Tracker")
         # so that I can change the event when the window looses focus
         self.installEventFilter(self)
-
+        print("Please")
         # widgets
         self.tblShowData = self.findChild(QTableWidget, "tblShowData")
         self.tblShowData.setToolTip("Double click on any cell to change it's value")
@@ -133,6 +134,7 @@ class DlgMain(QMainWindow):
         self.cmbGraphMonth.currentIndexChanged.connect(self.updateGraphsAndTable)
         self.tblShowData.cellChanged.connect(self.evt_tblShowData_cellChanged)
         self.tblShowData.cellChanged.connect(self.updateGraphsAndTable)
+        self.tblShowData.cellClicked.connect(self.evt_tblShowData_itemEntered)
 
     # signal functions
     def evt_btnAddExpense_clicked(self):
@@ -157,6 +159,9 @@ class DlgMain(QMainWindow):
             obj.ChangeRecords(row, column, requiredRecord.text())
         else:
             self.tblShowData.blockSignals(False)
+            
+    def evt_tblShowData_itemEntered(self, row, column):
+        self.displayGraph(row)
 
     # Display Items
     def loadData_tblShowData(self):
@@ -271,7 +276,7 @@ class DlgMain(QMainWindow):
         self.blockSignals(False)
 
     # Plots
-    def displayGraph(self):
+    def displayGraph(self, row: int = 0):
         # all time graph. Includes all tags and dates
         if cmbMainModeData[self.cmbMode.currentIndex()] == 'All Time':
             indexMonth = self.cmbMonth.findData('None')
@@ -431,28 +436,69 @@ class DlgMain(QMainWindow):
                         tagsList.append(element)
                 anotherCounter = 0
 
-            set1 = QBarSet("Expenses Monthly")
-            set1.append(expenseList)
-
-            series = QBarSeries()
+            
             subPlot = self.displaySubplots(self.cmbGraphYear.currentIndex(), self.cmbGraphMonth.currentIndex(), tagsList, True, True)
-            series.append(set1)
-            series.append(subPlot[0])
+            barToHighlight = self.highlightSelectedItem_graph(row, self.cmbYear.currentIndex(), self.cmbMonth.currentIndex(), True, True)
+            
+            try:
+                if barToHighlight[0]:
+                    set1 = QBarSet("Expenses Monthly")
+                    set3 = QBarSet('Highlighted')
+                    set3.setColor(QColor(255, 0, 0, 127))
+                    set1.setColor(QColor(0, 255, 25, 255))
+                    #[dataToHighlightList, tempExpenseList, tempTagsList, tag, row]
+                    set3.append(barToHighlight[0])
+                    expenseList.pop(barToHighlight[4])
+                    expenseList.insert(barToHighlight[4], 0)
+                    set1.append(expenseList)
+                    
+                    series = QBarSeries()
+                    series.append(set3)
+                    series.append(subPlot[0])
+                    series.append(set1)
+                    
+                    chart = QChart()
+                    chart.addSeries(series)
+                    chart.setTitle("")
 
-            chart = QChart()
-            chart.addSeries(series)
-            chart.setTitle("")
-            chart.setAnimationOptions(QChart.AllAnimations)
+                    categories = tagsList
+                    xAxis = QBarCategoryAxis()
+                    xAxis.append(categories)
+                    xAxis.append(subPlot[1])
+                    
+                    
+                    chart.createDefaultAxes()
+                    chart.setAxisX(xAxis, series)
+                    self.wiChart.setChart(chart)
+                    
+                
+                else:
+                    
+                    set1 = QBarSet("Expenses Monthly")
+                    set1.append(expenseList)
 
-            categories = tagsList
-            xAxis = QBarCategoryAxis()
-            xAxis.append(categories)
-            xAxis.append(subPlot[1])
+                    series = QBarSeries()
+                        
+                    series.append(set1)
+                    series.append(subPlot[0])
 
-            chart.createDefaultAxes()
-            chart.setAxisX(xAxis, series)
+                    chart = QChart()
+                    chart.addSeries(series)
+                    chart.setTitle("")
+                    chart.setAnimationOptions(QChart.AllAnimations)
 
-            self.wiChart.setChart(chart)
+                    categories = tagsList
+                    xAxis = QBarCategoryAxis()
+                    xAxis.append(categories)
+                    xAxis.append(subPlot[1])
+
+                    chart.createDefaultAxes()
+                    chart.setAxisX(xAxis, series)
+                
+                    self.wiChart.setChart(chart)
+            
+            except TypeError:
+                print("Caught")
 
     def displaySubplots(self, graphYearIndex: int, graphMonthIndex: int, xTicks: list, year: bool, month: bool) -> list:
         userData = Expenses.Expense.ReturnData()
@@ -512,9 +558,6 @@ class DlgMain(QMainWindow):
             for i in tempExpenseList:
                 expenseList.append(i)
 
-        print(expenseList)
-        print(tagsList)
-
         if year and month:
             set2 = QBarSet('{} {}'.format(cmbMainGraphYearData[graphYearIndex], cmbMainGraphMonthData[graphMonthIndex]))
         elif year and not month:
@@ -522,11 +565,70 @@ class DlgMain(QMainWindow):
 
         set2.append(expenseList)
         return [set2, tagsList]
+    
+    def highlightSelectedItem_graph(self, row: int, yearIndex: int, monthIndex:int, year: bool, month: bool) -> list[list, str, list, list]:
+        userData = Expenses.Expense.ReturnData()
+        dataToPlot = []
+        tempExpenseList = []
+        expenseList = []
+        tempTagsList = []
+        tempList = []
+        dataToHighlightList = []
+        addToDataToPlot = False
+        counter = 0
+        for li in userData:
+            for element in li:
+                counter += 1
+                if counter == 1:
+                    monthYear = element.split(' ')
+                    if year and month:
+                        if monthYear[1] == cmbMainYearData[yearIndex] and \
+                                monthYear[0] == cmbMainMonthData[monthIndex]:
+                            print('1')
+                            addToDataToPlot = True
+                    elif year and not month:
+                        if monthYear[1] == cmbMainYearData[yearIndex]:
+                            addToDataToPlot = True
+                    elif not year and month:
+                        if monthYear[0] == cmbMainMonthData[monthIndex]:
+                            addToDataToPlot = True
+                if addToDataToPlot:
+                    if counter != 1:
+                        tempList.append(element)
+            dataToPlot.append(tempList)
+            tempList = []
+            addToDataToPlot = False
+            counter = 0
 
+        anotherCounter = 0
+        for li2 in dataToPlot:
+            for element in li2:
+                anotherCounter += 1
+                if anotherCounter == 1:
+                    tempExpenseList.append(float(element))
+                elif anotherCounter == 2:
+                    tempTagsList.append(element)
+            anotherCounter = 0
+        try:  
+            dataToHighlight = tempExpenseList.pop(row)
+            tag = tempTagsList.pop(row)
+            
+            for i in range(len(tempExpenseList) + 1):
+                if i == row:
+                    dataToHighlightList.append(dataToHighlight)
+                else:
+                    dataToHighlightList.append(0)
+                    
+            return [dataToHighlightList, tempExpenseList, tempTagsList, tag, row]
+        except IndexError:
+            print('caught highlight')
+        
+        
+        
     # update widget functions:
 
-    def updateGraphsAndTable(self):
-        self.displayGraph()
+    def updateGraphsAndTable(self, row: int = 0):
+        self.displayGraph(row)
         self.loadData_tblShowData()
 
     # event filter for change in focus:
