@@ -14,7 +14,7 @@ class Expense:
         dateStr = ''
         for i in dateLi:
             dateStr += i + ' '
-        self.expenseList = [dateStr, expense, tag]
+        self.expenseList = [dateStr, float(expense), tag]
         return self.expenseList
 
     def WriteToCsv(self):
@@ -35,7 +35,7 @@ class Expense:
                         matchFound = False
 
                 if matchFound:
-                    df.loc[df['Tags'] == self.expenseList[2], ['Amount']] += int(self.expenseList[1])
+                    df.loc[df['Tags'] == self.expenseList[2], ['Amount']] += float(self.expenseList[1])
 
                 else:
                     doesntExists = True
@@ -45,7 +45,6 @@ class Expense:
                 df.loc[dfLength] = self.expenseList
 
             if doesntExists:
-                print("OK")
                 dfLength = len(df)
                 df.loc[dfLength] = self.expenseList
 
@@ -66,14 +65,17 @@ class Expense:
             df.to_csv("../Resources/Expense.csv", index=False)
 
     @staticmethod
-    def AddTag(tagName: str):
+    def AddTag(tagName: str) -> bool:
         with open("../Resources/Tags.txt", 'a', encoding='utf-8') as file:
             file.write('\n')
             file.write(tagName)
         file.close()
+        return True
+
+            
 
     @staticmethod
-    def ReturnTags() -> list:
+    def ReturnTags() -> list[list]:
         tagList = []
         with open("../Resources/Tags.txt", 'r', encoding='utf-8') as file:
             tempList = file.readlines()
@@ -81,26 +83,38 @@ class Expense:
                 tagList.append(i.strip('\n'))
         file.close()
         return tagList
+        
+            
 
     @staticmethod
-    def ReturnData() -> list:
+    def ReturnData() -> list[list, bool]:
         data = []
         counter = 0
-        with open("../Resources/Expense.csv", 'r', encoding='utf-8') as file:
-            reader = csv.reader(file)
-            for line in reader:
-                counter += 1
-                if counter == 1:
-                    continue
-                data.append(line)
-        file.close()
-        return data
+        if os.path.isfile("../Resources/Expense.csv"):
+            with open("../Resources/Expense.csv", 'r', encoding='utf-8') as file:
+                reader = csv.reader(file)
+                for line in reader:
+                    counter += 1
+                    if counter == 1:
+                        continue
+                    data.append(line)
+            file.close()
+            return [data, True]
+        return [data, False]
+            
 
     @staticmethod
-    def ReturnPlotData() -> list:
-        data = pd.read_csv("../Resources/Expense.csv")
-        df = pd.DataFrame(data)
-        expense = df['Amount']
-        tags = df['Tags']
-        returnList = [expense, tags]
-        return returnList
+    def ReturnPlotData() -> list[list, list]:
+        if os.path.isfile("../Resources/Expense.csv"):
+            data = pd.read_csv("../Resources/Expense.csv")
+            df = pd.DataFrame(data)
+            requiredDf = df.groupby(['Tags'])['Amount'].sum().reset_index()
+            expenses = requiredDf.Amount.to_list()
+            tags = requiredDf.Tags.to_list()
+            print(requiredDf)
+            return [expenses, tags]
+        
+            
+            
+        
+            
