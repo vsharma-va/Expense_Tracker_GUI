@@ -88,7 +88,9 @@ class DlgMain(QMainWindow):
         self.setWindowTitle("Expense Tracker")
         # so that I can change the event when the window looses focus
         self.installEventFilter(self)
-        print("Please")
+        
+        self.highlightGraph = False
+        
         # widgets
         self.tblShowData = self.findChild(QTableWidget, "tblShowData")
         self.tblShowData.setToolTip("Double click on any cell to change it's value")
@@ -161,7 +163,8 @@ class DlgMain(QMainWindow):
             self.tblShowData.blockSignals(False)
             
     def evt_tblShowData_itemEntered(self, row, column):
-        self.displayGraph(row)
+        self.displayGraph(row, column)
+        self.highlightGraph = True
 
     # Display Items
     def loadData_tblShowData(self):
@@ -170,84 +173,87 @@ class DlgMain(QMainWindow):
                 row1 = 0
                 column1 = 0
                 allData = Expenses.Expense.ReturnData()
-                self.tblShowData.blockSignals(True)
-                self.tblShowData.setRowCount(0)
-                self.tblShowData.setRowCount(len(allData))
-                self.tblShowData.setColumnCount(3)
-                self.tblShowData.setColumnWidth(2, 131)
-                for li in allData:
-                    for element in li:
-                        self.tblShowData.setItem(row1, column1, QTableWidgetItem(element))
-                        column1 += 1
-                    column1 = 0
-                    row1 += 1
-                self.tblShowData.blockSignals(False)
+                if allData[1]:
+                    self.tblShowData.blockSignals(True)
+                    self.tblShowData.setRowCount(0)
+                    self.tblShowData.setRowCount(len(allData[0]))
+                    self.tblShowData.setColumnCount(3)
+                    self.tblShowData.setColumnWidth(2, 131)
+                    for li in allData[0]:
+                        for element in li:
+                            self.tblShowData.setItem(row1, column1, QTableWidgetItem(element))
+                            column1 += 1
+                        column1 = 0
+                        row1 += 1
+                    self.tblShowData.blockSignals(False)
 
             elif cmbMainModeData[self.cmbMode.currentIndex()] == 'Yearly':
                 row = 0
                 column = 0
                 findDateCounter = 0
                 allData = Expenses.Expense.ReturnData()
-                addToRequiredData = False
-                requiredData = []
-                for li in allData:
-                    for element in li:
-                        findDateCounter += 1
-                        if findDateCounter == 1:
-                            monthYear = element.split(' ')
-                            if monthYear[1] == cmbMainYearData[self.cmbYear.currentIndex()]:
-                                addToRequiredData = True
-                        if addToRequiredData:
-                            requiredData.append(element)
+                if allData[1]:
                     addToRequiredData = False
-                    findDateCounter = 0
-                self.tblShowData.blockSignals(True)
-                self.tblShowData.setRowCount(0)
-                # divide by three because the data will always be in multiple of 3.
-                # and each row contain three cells
-                self.tblShowData.setRowCount(len(requiredData) / 3)
-                self.tblShowData.setColumnCount(3)
-                for i in requiredData:
-                    for records in requiredData:
-                        self.tblShowData.setItem(row, column, QTableWidgetItem(records))
-                        column += 1
-                    column = 0
-                    row = 0
-                self.tblShowData.blockSignals(False)
+                    requiredData = []
+                    for li in allData[0]:
+                        for element in li:
+                            findDateCounter += 1
+                            if findDateCounter == 1:
+                                monthYear = element.split(' ')
+                                if monthYear[1] == cmbMainYearData[self.cmbYear.currentIndex()]:
+                                    addToRequiredData = True
+                            if addToRequiredData:
+                                requiredData.append(element)
+                        addToRequiredData = False
+                        findDateCounter = 0
+                    self.tblShowData.blockSignals(True)
+                    self.tblShowData.setRowCount(0)
+                    # divide by three because the data will always be in multiple of 3.
+                    # and each row contain three cells
+                    self.tblShowData.setRowCount(len(requiredData) / 3)
+                    self.tblShowData.setColumnCount(3)
+                    for i in requiredData:
+                        for records in requiredData:
+                            self.tblShowData.setItem(row, column, QTableWidgetItem(records))
+                            column += 1
+                        column = 0
+                        row = 0
+                    self.tblShowData.blockSignals(False)
 
             elif cmbMainModeData[self.cmbMode.currentIndex()] == 'Monthly':
                 row = 0
                 column = 0
                 findDateCounter = 0
                 allData = Expenses.Expense.ReturnData()
-                addToRequiredData = False
-                requiredData = []
-                for li in allData:
-                    for element in li:
-                        findDateCounter += 1
-                        if findDateCounter == 1:
-                            monthYear = element.split(' ')
-                            if monthYear[1] == cmbMainYearData[self.cmbYear.currentIndex()] and \
-                                    monthYear[0] == cmbMainMonthData[self.cmbMonth.currentIndex()]:
-                                addToRequiredData = True
-                        if addToRequiredData:
-                            requiredData.append(element)
+                if allData[1]:
                     addToRequiredData = False
-                    findDateCounter = 0
+                    requiredData = []
+                    for li in allData[0]:
+                        for element in li:
+                            findDateCounter += 1
+                            if findDateCounter == 1:
+                                monthYear = element.split(' ')
+                                if monthYear[1] == cmbMainYearData[self.cmbYear.currentIndex()] and \
+                                        monthYear[0] == cmbMainMonthData[self.cmbMonth.currentIndex()]:
+                                    addToRequiredData = True
+                            if addToRequiredData:
+                                requiredData.append(element)
+                        addToRequiredData = False
+                        findDateCounter = 0
 
-                self.tblShowData.blockSignals(True)
-                self.tblShowData.setRowCount(0)
-                # divide by three because the data will always be in multiple of 3.
-                # and each row contain three cells
-                self.tblShowData.setRowCount(len(requiredData) / 3)
-                self.tblShowData.setColumnCount(3)
-                for i in requiredData:
-                    for records in requiredData:
-                        self.tblShowData.setItem(row, column, QTableWidgetItem(records))
-                        column += 1
-                    column = 0
-                    row = 0
-                self.tblShowData.blockSignals(False)
+                    self.tblShowData.blockSignals(True)
+                    self.tblShowData.setRowCount(0)
+                    # divide by three because the data will always be in multiple of 3.
+                    # and each row contain three cells
+                    self.tblShowData.setRowCount(len(requiredData) / 3)
+                    self.tblShowData.setColumnCount(3)
+                    for i in requiredData:
+                        for records in requiredData:
+                            self.tblShowData.setItem(row, column, QTableWidgetItem(records))
+                            column += 1
+                        column = 0
+                        row = 0
+                    self.tblShowData.blockSignals(False)
 
         except FileNotFoundError:
             QMessageBox.critical(self, 'Error', 'No Expense records exist!')
@@ -255,28 +261,29 @@ class DlgMain(QMainWindow):
     def loadData_cmbs(self):
         self.blockSignals(True)
         allData = Expenses.Expense.ReturnData()
-        counter = 0
-        for li in allData:
-            for element in li:
-                counter += 1
-                if counter == 1:
-                    monthYear = element.split(' ')
-                    if monthYear[0] not in cmbMainMonthData:
-                        cmbMainMonthData.append(monthYear[0])
-                        cmbMainGraphMonthData.append(monthYear[0])
-                    if monthYear[1] not in cmbMainYearData:
-                        cmbMainYearData.append(monthYear[1])
-                        cmbMainGraphYearData.append(monthYear[1])
+        if allData[1]:
             counter = 0
-        self.cmbMode.addItems(cmbMainModeData)
-        self.cmbMonth.addItems(cmbMainMonthData)
-        self.cmbYear.addItems(cmbMainYearData)
-        self.cmbGraphYear.addItems(cmbMainGraphYearData)
-        self.cmbGraphMonth.addItems(cmbMainGraphMonthData)
-        self.blockSignals(False)
+            for li in allData[0]:
+                for element in li:
+                    counter += 1
+                    if counter == 1:
+                        monthYear = element.split(' ')
+                        if monthYear[0] not in cmbMainMonthData:
+                            cmbMainMonthData.append(monthYear[0])
+                            cmbMainGraphMonthData.append(monthYear[0])
+                        if monthYear[1] not in cmbMainYearData:
+                            cmbMainYearData.append(monthYear[1])
+                            cmbMainGraphYearData.append(monthYear[1])
+                counter = 0
+            self.cmbMode.addItems(cmbMainModeData)
+            self.cmbMonth.addItems(cmbMainMonthData)
+            self.cmbYear.addItems(cmbMainYearData)
+            self.cmbGraphYear.addItems(cmbMainGraphYearData)
+            self.cmbGraphMonth.addItems(cmbMainGraphMonthData)
+            self.blockSignals(False)
 
     # Plots
-    def displayGraph(self, row: int = 0):
+    def displayGraph(self, row: int = 0, column: int = 0):
         # all time graph. Includes all tags and dates
         if cmbMainModeData[self.cmbMode.currentIndex()] == 'All Time':
             indexMonth = self.cmbMonth.findData('None')
@@ -295,26 +302,75 @@ class DlgMain(QMainWindow):
                 self.cmbGraphMonth.model().item(k).setEnabled(False)
             for h in range(lengthGraphYear):
                 self.cmbGraphYear.model().item(h).setEnabled(False)
-            set0 = QBarSet("Expense")
+                
             data = Expenses.Expense.ReturnPlotData()
-            set0.append(data[0])
+            #print(data[1])
+            barToHighlight = self.highlightSelectedItem_graph(row, self.cmbYear.currentIndex(), self.cmbMonth.currentIndex(), False, False)
+            
+            try:
+                if self.highlightGraph:
+                    set1 = QBarSet("Expenses Monthly")
+                    set3 = QBarSet('Highlighted')
+                    set1.setColor(QColor(0, 0, 0))
+                    set3.setColor(QColor(191, 105, 0))                 # 159, 193, 211
+                    #[dataToHighlightList, row]
+                    highlightDataList = []
+                    tagClicked = self.tblShowData.item(row, column + 1)
+                    firstIndex = data[1].index(tagClicked.text())
+                    highlightData = data[0].pop(firstIndex)
+                    data[0].insert(firstIndex, 0)
+                    for i in range(len(data[1])):
+                        if tagClicked.text() == data[1][i]:
+                            highlightDataList.append(highlightData)
+                        else:
+                            highlightDataList.append(0)
+                    set1.append(data[0])
+                    set3.append(highlightDataList)
+                
+                    series = QBarSeries()
+                    series.append(set3)
+                    series.append(set1)
+                    
+                    chart = QChart()
+                    chart.addSeries(series)
+                    chart.setTitle("")
+                    chart.setAnimationOptions(QChart.SeriesAnimations)
 
-            series = QBarSeries()
-            series.append(set0)
+                    categories = data[1]
+                    xAxis = QBarCategoryAxis()
+                    xAxis.append(categories)
+                    
+                    
+                    chart.createDefaultAxes()
+                    chart.setAxisX(xAxis, series)
+                    self.wiChart.setChart(chart)
+                    
+                
+                else:
+                    
+                    set1 = QBarSet("Expenses Monthly")
+                    set1.append(data[0])
+                    set1.setColor(QColor(0, 0, 0))
+                    series = QBarSeries()
+                        
+                    series.append(set1)
 
-            chart = QChart()
-            chart.addSeries(series)
-            chart.setTitle("")
-            chart.setAnimationOptions(QChart.AllAnimations)
+                    chart = QChart()
+                    chart.addSeries(series)
+                    chart.setTitle("")
+                    chart.setAnimationOptions(QChart.AllAnimations)
 
-            categories = data[1]
-            xAxis = QBarCategoryAxis()
-            xAxis.append(categories)
+                    categories = data[1]
+                    xAxis = QBarCategoryAxis()
+                    xAxis.append(categories)
 
-            chart.createDefaultAxes()
-            chart.setAxisX(xAxis, series)
-
-            self.wiChart.setChart(chart)
+                    chart.createDefaultAxes()
+                    chart.setAxisX(xAxis, series)
+                
+                    self.wiChart.setChart(chart)
+            
+            except TypeError:
+                print("Caught")
 
         elif cmbMainModeData[self.cmbMode.currentIndex()] == 'Yearly':
             indexMonth = self.cmbMonth.findData('None')
@@ -335,59 +391,101 @@ class DlgMain(QMainWindow):
             set0 = QBarSet("Expenses Yearly")
 
             data = Expenses.Expense.ReturnData()
-            dataToPlot = []
-            expenseList = []
-            tagsList = []
-            tempList = []
-            addToDataToPlot = False
-            counter = 0
-            for li in data:
-                for element in li:
-                    counter += 1
-                    if counter == 1:
-                        monthYear = element.split(' ')
-                        if monthYear[1] == cmbMainYearData[self.cmbYear.currentIndex()]:
-                            addToDataToPlot = True
-                    if addToDataToPlot:
-                        if counter != 1:
-                            tempList.append(element)
-                dataToPlot.append(tempList)
+            if data[1]:
+                dataToPlot = []
+                expenseList = []
+                tagsList = []
                 tempList = []
                 addToDataToPlot = False
                 counter = 0
+                for li in data[0]:
+                    for element in li:
+                        counter += 1
+                        if counter == 1:
+                            monthYear = element.split(' ')
+                            if monthYear[1] == cmbMainYearData[self.cmbYear.currentIndex()]:
+                                addToDataToPlot = True
+                        if addToDataToPlot:
+                            if counter != 1:
+                                tempList.append(element)
+                    dataToPlot.append(tempList)
+                    tempList = []
+                    addToDataToPlot = False
+                    counter = 0
 
-            anotherCounter = 0
-            for li2 in dataToPlot:
-                for element in li2:
-                    anotherCounter += 1
-                    if anotherCounter == 1:
-                        expenseList.append(float(element))
-                    elif anotherCounter == 2:
-                        tagsList.append(element)
                 anotherCounter = 0
+                for li2 in dataToPlot:
+                    for element in li2:
+                        anotherCounter += 1
+                        if anotherCounter == 1:
+                            expenseList.append(float(element))
+                        elif anotherCounter == 2:
+                            tagsList.append(element)
+                    anotherCounter = 0
 
-            subPlot = self.displaySubplots(self.cmbGraphYear.currentIndex(), self.cmbGraphMonth.currentIndex(), tagsList, True, False)
+                subPlot = self.displaySubplots(self.cmbGraphYear.currentIndex(), self.cmbGraphMonth.currentIndex(), tagsList, True, False)
+                barToHighlight = self.highlightSelectedItem_graph(row, self.cmbYear.currentIndex(), self.cmbMonth.currentIndex(), True, False)
+                
+                try:
+                    if self.highlightGraph:
+                        set1 = QBarSet("Expenses Monthly")
+                        set3 = QBarSet('Highlighted')
+                        set1.setColor(QColor(0, 0, 0))
+                        set3.setColor(QColor(191, 105, 0))                 # 159, 193, 211
+                        #[dataToHighlightList, row]
+                        set3.append(barToHighlight[0])
+                        expenseList.pop(barToHighlight[1])
+                        expenseList.insert(barToHighlight[1], 0)
+                        set1.append(expenseList)
+                        
+                        series = QBarSeries()
+                        series.append(set3)
+                        series.append(subPlot[0])
+                        series.append(set1)
+                        
+                        chart = QChart()
+                        chart.addSeries(series)
+                        chart.setTitle("")
+                        chart.setAnimationOptions(QChart.SeriesAnimations)
 
-            set0.append(expenseList)
+                        categories = tagsList
+                        xAxis = QBarCategoryAxis()
+                        xAxis.append(categories)
+                        xAxis.append(subPlot[1])
+                        
+                        
+                        chart.createDefaultAxes()
+                        chart.setAxisX(xAxis, series)
+                        self.wiChart.setChart(chart)
+                        
+                    
+                    else:
+                        
+                        set1 = QBarSet("Expenses Monthly")
+                        set1.append(expenseList)
+                        set1.setColor(QColor(0, 0, 0))
+                        series = QBarSeries()
+                            
+                        series.append(set1)
+                        series.append(subPlot[0])
 
-            series = QBarSeries()
-            series.append(set0)
-            series.append(subPlot[0])
+                        chart = QChart()
+                        chart.addSeries(series)
+                        chart.setTitle("")
+                        chart.setAnimationOptions(QChart.AllAnimations)
 
-            chart = QChart()
-            chart.addSeries(series)
-            chart.setTitle("")
-            chart.setAnimationOptions(QChart.AllAnimations)
+                        categories = tagsList
+                        xAxis = QBarCategoryAxis()
+                        xAxis.append(categories)
+                        xAxis.append(subPlot[1])
 
-            categories = tagsList
-            xAxis = QBarCategoryAxis()
-            xAxis.append(categories)
-            xAxis.append(subPlot[1])
-
-            chart.createDefaultAxes()
-            chart.setAxisX(xAxis, series)
-
-            self.wiChart.setChart(chart)
+                        chart.createDefaultAxes()
+                        chart.setAxisX(xAxis, series)
+                    
+                        self.wiChart.setChart(chart)
+                
+                except TypeError:
+                    print("Caught")
 
         elif cmbMainModeData[self.cmbMode.currentIndex()] == 'Monthly':
             lengthMonth = self.cmbMonth.count()
@@ -404,19 +502,198 @@ class DlgMain(QMainWindow):
                 self.cmbGraphYear.model().item(h).setEnabled(True)
 
             data = Expenses.Expense.ReturnData()
+            if data[1]:
+                dataToPlot = []
+                expenseList = []
+                tagsList = []
+                tempList = []
+                addToDataToPlot = False
+                counter = 0
+                for li in data[0]:
+                    for element in li:
+                        counter += 1
+                        if counter == 1:
+                            monthYear = element.split(' ')
+                            if monthYear[1] == cmbMainYearData[self.cmbYear.currentIndex()] and \
+                                    monthYear[0] == cmbMainMonthData[self.cmbMonth.currentIndex()]:
+                                addToDataToPlot = True
+                        if addToDataToPlot:
+                            if counter != 1:
+                                tempList.append(element)
+                    dataToPlot.append(tempList)
+                    tempList = []
+                    addToDataToPlot = False
+                    counter = 0
+
+                anotherCounter = 0
+                for li2 in dataToPlot:
+                    for element in li2:
+                        anotherCounter += 1
+                        if anotherCounter == 1:
+                            expenseList.append(float(element))
+                        elif anotherCounter == 2:
+                            tagsList.append(element)
+                    anotherCounter = 0
+
+                
+                subPlot = self.displaySubplots(self.cmbGraphYear.currentIndex(), self.cmbGraphMonth.currentIndex(), tagsList, True, True)
+                barToHighlight = self.highlightSelectedItem_graph(row, self.cmbYear.currentIndex(), self.cmbMonth.currentIndex(), True, True)
+                
+                try:
+                    if self.highlightGraph:
+                        set1 = QBarSet("Expenses Monthly")
+                        set3 = QBarSet('Highlighted')
+                        set1.setColor(QColor(0, 0, 0))
+                        set3.setColor(QColor(191, 105, 0))                 # 159, 193, 211
+                        #[dataToHighlightList, row]
+                        set3.append(barToHighlight[0])
+                        expenseList.pop(barToHighlight[1])
+                        expenseList.insert(barToHighlight[1], 0)
+                        set1.append(expenseList)
+                        
+                        series = QBarSeries()
+                        series.append(set3)
+                        series.append(subPlot[0])
+                        series.append(set1)
+                        
+                        chart = QChart()
+                        chart.addSeries(series)
+                        chart.setTitle("")
+                        chart.setAnimationOptions(QChart.SeriesAnimations)
+
+                        categories = tagsList
+                        xAxis = QBarCategoryAxis()
+                        xAxis.append(categories)
+                        xAxis.append(subPlot[1])
+                        
+                        
+                        chart.createDefaultAxes()
+                        chart.setAxisX(xAxis, series)
+                        self.wiChart.setChart(chart)
+                        
+                    
+                    else:
+                        
+                        set1 = QBarSet("Expenses Monthly")
+                        set1.append(expenseList)
+                        set1.setColor(QColor(0, 0, 0))
+                        series = QBarSeries()
+                            
+                        series.append(set1)
+                        series.append(subPlot[0])
+
+                        chart = QChart()
+                        chart.addSeries(series)
+                        chart.setTitle("")
+                        chart.setAnimationOptions(QChart.AllAnimations)
+
+                        categories = tagsList
+                        xAxis = QBarCategoryAxis()
+                        xAxis.append(categories)
+                        xAxis.append(subPlot[1])
+
+                        chart.createDefaultAxes()
+                        chart.setAxisX(xAxis, series)
+                    
+                        self.wiChart.setChart(chart)
+                
+                except TypeError:
+                    print("Caught")
+
+    def displaySubplots(self, graphYearIndex: int, graphMonthIndex: int, xTicks: list, year: bool, month: bool) -> list[QBarSet, list]:
+        userData = Expenses.Expense.ReturnData()
+        if userData[1]:
             dataToPlot = []
+            tempExpenseList = []
             expenseList = []
             tagsList = []
             tempList = []
             addToDataToPlot = False
             counter = 0
-            for li in data:
+            for li in userData[0]:
                 for element in li:
                     counter += 1
                     if counter == 1:
                         monthYear = element.split(' ')
-                        if monthYear[1] == cmbMainYearData[self.cmbYear.currentIndex()] and \
-                                monthYear[0] == cmbMainMonthData[self.cmbMonth.currentIndex()]:
+                        if year and month:
+                            if monthYear[1] == cmbMainGraphYearData[graphYearIndex] and \
+                                    monthYear[0] == cmbMainMonthData[graphMonthIndex]:
+                                addToDataToPlot = True
+                        elif year and not month:
+                            if monthYear[1] == cmbMainGraphYearData[graphYearIndex]:
+                                addToDataToPlot = True
+                        elif not year and month:
+                            if monthYear[0] == cmbMainMonthData[graphMonthIndex]:
+                                addToDataToPlot = True
+                    if addToDataToPlot:
+                        if counter != 1:
+                            tempList.append(element)
+                dataToPlot.append(tempList)
+                tempList = []
+                addToDataToPlot = False
+                counter = 0
+
+            anotherCounter = 0
+            for li2 in dataToPlot:
+                for element in li2:
+                    anotherCounter += 1
+                    if anotherCounter == 1:
+                        tempExpenseList.append(float(element))
+                    elif anotherCounter == 2:
+                        tagsList.append(element)
+                anotherCounter = 0
+
+            removeCounter = 0
+            expenseList = [0] * len(xTicks)
+            try:
+                for i in range(len(tagsList)):
+                    if tagsList[i] in xTicks:
+                        where = xTicks.index(tagsList[i])
+                        expenseList[where] = tempExpenseList[i - removeCounter]
+                        tempExpenseList.pop(i - removeCounter)
+                        removeCounter += 1
+            except IndexError:
+                print('caught subplot list error')
+                
+            if tempExpenseList:
+                for i in tempExpenseList:
+                    expenseList.append(i)
+
+            if year and month:
+                set2 = QBarSet('{} {}'.format(cmbMainGraphYearData[graphYearIndex], cmbMainGraphMonthData[graphMonthIndex]))
+            elif year and not month:
+                set2 = QBarSet('{}'.format(cmbMainGraphYearData[graphYearIndex]))
+
+            set2.append(expenseList)
+            return [set2, tagsList]
+    
+    def highlightSelectedItem_graph(self, row: int, yearIndex: int, monthIndex:int, year: bool, month: bool) -> list[list, int]:
+        userData = Expenses.Expense.ReturnData()
+        if userData[1]:
+            dataToPlot = []
+            tempExpenseList = []
+            expenseList = []
+            tempTagsList = []
+            tempList = []
+            dataToHighlightList = []
+            addToDataToPlot = False
+            counter = 0
+            for li in userData[0]:
+                for element in li:
+                    counter += 1
+                    if counter == 1:
+                        monthYear = element.split(' ')
+                        if year and month:
+                            if monthYear[1] == cmbMainYearData[yearIndex] and \
+                                    monthYear[0] == cmbMainMonthData[monthIndex]:
+                                addToDataToPlot = True
+                        elif year and not month:
+                            if monthYear[1] == cmbMainYearData[yearIndex]:
+                                addToDataToPlot = True
+                        elif not year and month:
+                            if monthYear[0] == cmbMainMonthData[monthIndex]:
+                                addToDataToPlot = True
+                        elif not year and not month:
                             addToDataToPlot = True
                     if addToDataToPlot:
                         if counter != 1:
@@ -431,197 +708,22 @@ class DlgMain(QMainWindow):
                 for element in li2:
                     anotherCounter += 1
                     if anotherCounter == 1:
-                        expenseList.append(float(element))
+                        tempExpenseList.append(float(element))
                     elif anotherCounter == 2:
-                        tagsList.append(element)
+                        tempTagsList.append(element)
                 anotherCounter = 0
-
-            
-            subPlot = self.displaySubplots(self.cmbGraphYear.currentIndex(), self.cmbGraphMonth.currentIndex(), tagsList, True, True)
-            barToHighlight = self.highlightSelectedItem_graph(row, self.cmbYear.currentIndex(), self.cmbMonth.currentIndex(), True, True)
-            
-            try:
-                if barToHighlight[0]:
-                    set1 = QBarSet("Expenses Monthly")
-                    set3 = QBarSet('Highlighted')
-                    set3.setColor(QColor(255, 0, 0, 127))
-                    set1.setColor(QColor(0, 255, 25, 255))
-                    #[dataToHighlightList, tempExpenseList, tempTagsList, tag, row]
-                    set3.append(barToHighlight[0])
-                    expenseList.pop(barToHighlight[4])
-                    expenseList.insert(barToHighlight[4], 0)
-                    set1.append(expenseList)
-                    
-                    series = QBarSeries()
-                    series.append(set3)
-                    series.append(subPlot[0])
-                    series.append(set1)
-                    
-                    chart = QChart()
-                    chart.addSeries(series)
-                    chart.setTitle("")
-
-                    categories = tagsList
-                    xAxis = QBarCategoryAxis()
-                    xAxis.append(categories)
-                    xAxis.append(subPlot[1])
-                    
-                    
-                    chart.createDefaultAxes()
-                    chart.setAxisX(xAxis, series)
-                    self.wiChart.setChart(chart)
-                    
+            try:  
+                dataToHighlight = tempExpenseList.pop(row)
                 
-                else:
-                    
-                    set1 = QBarSet("Expenses Monthly")
-                    set1.append(expenseList)
-
-                    series = QBarSeries()
+                for i in range(len(tempExpenseList) + 1):
+                    if i == row:
+                        dataToHighlightList.append(dataToHighlight)
+                    else:
+                        dataToHighlightList.append(0)
                         
-                    series.append(set1)
-                    series.append(subPlot[0])
-
-                    chart = QChart()
-                    chart.addSeries(series)
-                    chart.setTitle("")
-                    chart.setAnimationOptions(QChart.AllAnimations)
-
-                    categories = tagsList
-                    xAxis = QBarCategoryAxis()
-                    xAxis.append(categories)
-                    xAxis.append(subPlot[1])
-
-                    chart.createDefaultAxes()
-                    chart.setAxisX(xAxis, series)
-                
-                    self.wiChart.setChart(chart)
-            
-            except TypeError:
-                print("Caught")
-
-    def displaySubplots(self, graphYearIndex: int, graphMonthIndex: int, xTicks: list, year: bool, month: bool) -> list:
-        userData = Expenses.Expense.ReturnData()
-        dataToPlot = []
-        tempExpenseList = []
-        expenseList = []
-        tagsList = []
-        tempList = []
-        addToDataToPlot = False
-        counter = 0
-        for li in userData:
-            for element in li:
-                counter += 1
-                if counter == 1:
-                    monthYear = element.split(' ')
-                    if year and month:
-                        if monthYear[1] == cmbMainGraphYearData[graphYearIndex] and \
-                                monthYear[0] == cmbMainMonthData[graphMonthIndex]:
-                            addToDataToPlot = True
-                    elif year and not month:
-                        if monthYear[1] == cmbMainGraphYearData[graphYearIndex]:
-                            addToDataToPlot = True
-                    elif not year and month:
-                        if monthYear[0] == cmbMainMonthData[graphMonthIndex]:
-                            addToDataToPlot = True
-                if addToDataToPlot:
-                    if counter != 1:
-                        tempList.append(element)
-            dataToPlot.append(tempList)
-            tempList = []
-            addToDataToPlot = False
-            counter = 0
-
-        anotherCounter = 0
-        for li2 in dataToPlot:
-            for element in li2:
-                anotherCounter += 1
-                if anotherCounter == 1:
-                    tempExpenseList.append(float(element))
-                elif anotherCounter == 2:
-                    tagsList.append(element)
-            anotherCounter = 0
-
-        counterToRemove = 0
-        for i in range(len(xTicks)):
-            try:
-                if xTicks[i] == tagsList[i]:
-                    expenseList.append(tempExpenseList[i - counterToRemove])
-                    tempExpenseList.pop(i - counterToRemove)
-                    counterToRemove += 1
-                else:
-                    expenseList.append(0)
+                return [dataToHighlightList, row]
             except IndexError:
-                expenseList.append(0)
-
-        if tempExpenseList:
-            for i in tempExpenseList:
-                expenseList.append(i)
-
-        if year and month:
-            set2 = QBarSet('{} {}'.format(cmbMainGraphYearData[graphYearIndex], cmbMainGraphMonthData[graphMonthIndex]))
-        elif year and not month:
-            set2 = QBarSet('{}'.format(cmbMainGraphYearData[graphYearIndex]))
-
-        set2.append(expenseList)
-        return [set2, tagsList]
-    
-    def highlightSelectedItem_graph(self, row: int, yearIndex: int, monthIndex:int, year: bool, month: bool) -> list[list, str, list, list]:
-        userData = Expenses.Expense.ReturnData()
-        dataToPlot = []
-        tempExpenseList = []
-        expenseList = []
-        tempTagsList = []
-        tempList = []
-        dataToHighlightList = []
-        addToDataToPlot = False
-        counter = 0
-        for li in userData:
-            for element in li:
-                counter += 1
-                if counter == 1:
-                    monthYear = element.split(' ')
-                    if year and month:
-                        if monthYear[1] == cmbMainYearData[yearIndex] and \
-                                monthYear[0] == cmbMainMonthData[monthIndex]:
-                            print('1')
-                            addToDataToPlot = True
-                    elif year and not month:
-                        if monthYear[1] == cmbMainYearData[yearIndex]:
-                            addToDataToPlot = True
-                    elif not year and month:
-                        if monthYear[0] == cmbMainMonthData[monthIndex]:
-                            addToDataToPlot = True
-                if addToDataToPlot:
-                    if counter != 1:
-                        tempList.append(element)
-            dataToPlot.append(tempList)
-            tempList = []
-            addToDataToPlot = False
-            counter = 0
-
-        anotherCounter = 0
-        for li2 in dataToPlot:
-            for element in li2:
-                anotherCounter += 1
-                if anotherCounter == 1:
-                    tempExpenseList.append(float(element))
-                elif anotherCounter == 2:
-                    tempTagsList.append(element)
-            anotherCounter = 0
-        try:  
-            dataToHighlight = tempExpenseList.pop(row)
-            tag = tempTagsList.pop(row)
-            
-            for i in range(len(tempExpenseList) + 1):
-                if i == row:
-                    dataToHighlightList.append(dataToHighlight)
-                else:
-                    dataToHighlightList.append(0)
-                    
-            return [dataToHighlightList, tempExpenseList, tempTagsList, tag, row]
-        except IndexError:
-            print('caught highlight')
+                print('caught highlight')
         
         
         
